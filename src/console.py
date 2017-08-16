@@ -114,13 +114,13 @@ class Console(object):
         try:
             self.basicCommandList[_command.lower()](_parameters)
             return
-        except:
+        except KeyError:
             # Handle the registred commands
             try:
                 self.commandList[_command.lower()].before(_parameters)
                 self.commandList[_command.lower()].execute(_parameters)
                 self.commandList[_command.lower()].after(_parameters)
-            except:
+            except KeyError:
                 print(self.prompt_messages["ERROR_CMD"].format(_command), file=sys.stderr)
 
 
@@ -140,29 +140,31 @@ class Console(object):
         return True
 
     # Help on commands
-    def command_help(self, _parameter):
+    def command_help(self, _parameter=""):
         # Help with parameter called
         if(len(_parameter) > 0):
-            try:
-                if(_parameter in self.basicCommandList.keys()):
-                    print("help xxx -> Get help on command 'xxx'.\n"
-                          "version -> Display version of console.\n"
-                          "exit -> Quits console.\n")
-                    return True
-                else:
-                    self.commandList[_parameter.lower()].help(_parameter)
-                    return True
-            except:
+            # basic command
+            if(_parameter in self.basicCommandList.keys()):
+                print("help xxx -> Get help on command 'xxx'.\n"
+                      "version -> Display version of console.\n"
+                      "exit -> Quits console.\n")
+                return True
+            # registered command
+            elif(_parameter in self.commandList.keys()):
+                self.commandList[_parameter.lower()].help(_parameter)
+                return True
+            else:
+                # unknown command
                 print(self.prompt_messages["ERROR_CMD"].format(_parameter), file=sys.stderr)
                 return False 
         else:
             # Help without parameters called.
             # --> Just print out all commands and basic commands.
-            print("Hier!!!")
             print("help xxx -> Get help on command 'xxx'.\n"
                   "version -> Display version of console.\n"
                   "exit -> Quits console.")
 
-            for item in self.commandList:
-                print(str("\"{0}\" -> .\n").format(item))# --> {1}.\n").format(item, str(self.commandList[item].help(""))))
+            for item in self.commandList.keys():
+                print(str(item) + str(" ->"), end=" ")
+                self.commandList[item].helpShort(_parameter)
             return True

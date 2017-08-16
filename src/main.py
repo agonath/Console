@@ -10,16 +10,18 @@ class Hello_World(Command):
         print("Hello World!")
         return super().execute(_parameters)
 
+    def helpShort(self, _parameters):
+        print("Prints Hello World.")
+
     def help(self, _parameters):
-        print("Prints Hello World")
+        print("Prints Hello World.")
 
 #
 # Start console
 #
 def main(args):
     con = Console(args)
-    hello = Hello_World("hello", con)
-
+    hello = Hello_World(_name="hello", _console=con)
     con.consoleLoop();
 
 
