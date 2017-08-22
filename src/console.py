@@ -2,9 +2,10 @@ import sys
 import os
 #import signal # for later usage
 import string
+import urwid
 from consoleCommand import Command
 
-CONSOLE_VERSION = (0, 0, 1)
+CONSOLE_VERSION = (0, 0, 2)
 DEBUG = False
 
 
@@ -21,7 +22,7 @@ class Console(object):
         self.lastResult = str()
         self.version = str(CONSOLE_VERSION[0]) + "." + str(CONSOLE_VERSION[1]) + "." + str(CONSOLE_VERSION[2])
         self.running = True
-        self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"ERROR-> Command <{0}> doesn't seems to exists.\n"} # replace with json file
+        self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"ERROR-> Command <{0}> doesn't seems to exists.\n", "ERROR_MSG":"ERROR-> {0}\n"} # replace with json file
         # save the system standard in, out, error streams
         self.oldStdout = sys.stdout;
         self.oldStdin = sys.stdin;
@@ -30,7 +31,10 @@ class Console(object):
         
 
     def __del__(self):
-        pass
+        # restore original streams
+        sys.stdout = self.oldStderror
+        sys.stdin = self.oldStdin
+        sys.stderr = self.oldStderror
 
 
     # --- Console core functions ----
@@ -46,6 +50,20 @@ class Console(object):
             return False
         except:
             return False
+
+    #
+    # Print error messages.
+    #
+    def errorMsg(self, _msg):
+        print(self.prompt_messages[ERROR_MSG].format(_msg), file=sys.stderr)
+
+    #
+    # Print output in HTML format.
+    # Just some HTML-Tags are supported.
+    #
+    # TODO
+    def htmlPrint(self, _htmlMsg):
+        pass
 
     #
     # Start the console
@@ -114,13 +132,13 @@ class Console(object):
         try:
             self.basicCommandList[_command.lower()](_parameters)
             return
-        except KeyError:
+        except LookupError:
             # Handle the registred commands
             try:
                 self.commandList[_command.lower()].before(_parameters)
                 self.commandList[_command.lower()].execute(_parameters)
                 self.commandList[_command.lower()].after(_parameters)
-            except KeyError:
+            except LookupError:
                 print(self.prompt_messages["ERROR_CMD"].format(_command), file=sys.stderr)
 
 
