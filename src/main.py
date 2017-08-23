@@ -1,9 +1,11 @@
 import sys
 import os
 from console import Console
-from consoleCommand import Command
+#from consoleCommand import Command
+
 
 # Test-Command
+"""
 class Hello_World(Command):
 
     def execute(self, _parameters):
@@ -15,13 +17,14 @@ class Hello_World(Command):
 
     def help(self, _parameters):
         print("Prints Hello World.")
-
+"""
 #
 # Start console
 #
 def main(args):
     con = Console(args)
-    hello = Hello_World(_name="hello", _console=con)
+   # hello = Hello_World(_name="hello", _console=con)
+    hello = con.loadCommandModule(_name="helloworld.py", _path="Commands\\")
     con.consoleLoop();
 
 

@@ -1,8 +1,9 @@
 import sys
+import importlib
 import os
 #import signal # for later usage
 import string
-import urwid
+#import urwid # -> Graphic Console
 from consoleCommand import Command
 
 CONSOLE_VERSION = (0, 0, 2)
@@ -22,7 +23,7 @@ class Console(object):
         self.lastResult = str()
         self.version = str(CONSOLE_VERSION[0]) + "." + str(CONSOLE_VERSION[1]) + "." + str(CONSOLE_VERSION[2])
         self.running = True
-        self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"ERROR-> Command <{0}> doesn't seems to exists.\n", "ERROR_MSG":"ERROR-> {0}\n"} # replace with json file
+        self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"Command <{0}> doesn't seems to exists.\n", "ERROR":"ERROR-> {0}\n"} # replace with json file
         # save the system standard in, out, error streams
         self.oldStdout = sys.stdout;
         self.oldStdin = sys.stdin;
@@ -55,7 +56,7 @@ class Console(object):
     # Print error messages.
     #
     def errorMsg(self, _msg):
-        print(self.prompt_messages[ERROR_MSG].format(_msg), file=sys.stderr)
+        print(self.prompt_messages["ERROR"].format(_msg), file=sys.stderr)
 
     #
     # Print output in HTML format.
@@ -139,7 +140,7 @@ class Console(object):
                 self.commandList[_command.lower()].execute(_parameters)
                 self.commandList[_command.lower()].after(_parameters)
             except LookupError:
-                print(self.prompt_messages["ERROR_CMD"].format(_command), file=sys.stderr)
+                self.errorMsg(self.prompt_messages["ERROR_CMD"].format(_command))
 
 
   
@@ -173,7 +174,7 @@ class Console(object):
                 return True
             else:
                 # unknown command
-                print(self.prompt_messages["ERROR_CMD"].format(_parameter), file=sys.stderr)
+                self.errorMsg(self.prompt_messages["ERROR_CMD"].format(_command))
                 return False 
         else:
             # Help without parameters called.
@@ -186,3 +187,19 @@ class Console(object):
                 print(str(item) + str(" ->"), end=" ")
                 self.commandList[item].helpShort(_parameter)
             return True
+
+    # TODO
+    def loadCommandModule(self, *, _path="Commands\\", _name):
+        if(len(_name) > 0):
+            try:
+                if(_path not in sys.path):
+                    sys.path.append(_path)
+                    print(sys.path)
+
+                module = importlib.import_module(_name)
+                print("Imported Module: " + str(module))
+                command = getattr(module, 'class')
+                self.registerCommand(command)
+                return command
+            except Exception as e:
+                print("Error-> " + str(e))
