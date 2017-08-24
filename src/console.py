@@ -13,9 +13,9 @@ DEBUG = False
 # Console class
 class Console(object):
     
-    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "oldStdout", "oldStdin", "oldStderror"]
+    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "stdOut", "stdIn", "stdError"]
     
-    def __init__(self, _args):
+    def __init__(self, _args, _stdout=sys.stdout, _stdin=sys.stdin, _stderror=sys.stderr):
         self.history = {}
         self.lineCounter = 0
         self.commandList = {}  # List of registred commands (class Command)
@@ -24,18 +24,16 @@ class Console(object):
         self.version = str(CONSOLE_VERSION[0]) + "." + str(CONSOLE_VERSION[1]) + "." + str(CONSOLE_VERSION[2])
         self.running = True
         self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"Command <{0}> doesn't seems to exists.\n", "ERROR":"ERROR-> {0}\n"} # replace with json file
-        # save the system standard in, out, error streams
-        self.oldStdout = sys.stdout;
-        self.oldStdin = sys.stdin;
-        self.oldStderror = sys.stderr;
+        
+        # set std streams, defaults to system values
+        self.stdOut = _stdout
+        self.stdIn = _stdin
+        self.stdError = _stderror
 
         
 
     def __del__(self):
-        # restore original streams
-        sys.stdout = self.oldStderror
-        sys.stdin = self.oldStdin
-        sys.stderr = self.oldStderror
+        pass
 
 
     # --- Console core functions ----
@@ -56,14 +54,21 @@ class Console(object):
     # Print error messages.
     #
     def errorMsg(self, _msg):
-        print(self.prompt_messages["ERROR"].format(_msg), file=sys.stderr)
+        self.stdError.write(self.prompt_messages["ERROR"].format(_msg))
 
     #
-    # Print output in HTML format.
-    # Just some HTML-Tags are supported.
+    # Print text to current console stdout stream.
+    #
+    def printMsg(self, _msg):
+        self.stdOut.write(str(_msg))
+
+    #
+    # Print HTML formatted text to console.
+    # Just some HTML-Tags are supported. (<br>, <b>, <p>...)
     #
     # TODO
-    def htmlPrint(self, _htmlMsg):
+    def printHtmlMsg(self, _htmlMsg):
+        result = ""
         pass
 
     #
@@ -112,7 +117,7 @@ class Console(object):
             #Debug info if enabled
             if(DEBUG):
                 for x in self.history:
-                    print("History-Entry No.: " + str(x) + " - " + str(self.history[x]))
+                    self.printMsg("History-Entry No.: " + str(x) + " - " + str(self.history[x]))
 
 
             # try to find the command and excute it
@@ -126,8 +131,8 @@ class Console(object):
     def parseExecute(self, _command, _parameters):
 
         if(DEBUG):
-            print("Command: ", _command)
-            print("Parameters: ", _parameters)
+            self.printMsg("Command: ", _command)
+            self.printMsg("Parameters: ", _parameters)
 
         # Handle the built in functions if needed
         try:
@@ -164,7 +169,7 @@ class Console(object):
         if(len(_parameter) > 0):
             # basic command
             if(_parameter in self.basicCommandList.keys()):
-                print("help xxx -> Get help on command 'xxx'.\n"
+                self.printMsg("help xxx -> Get help on command 'xxx'.\n"
                       "version -> Display version of console.\n"
                       "exit -> Quits console.\n")
                 return True
@@ -174,12 +179,12 @@ class Console(object):
                 return True
             else:
                 # unknown command
-                self.errorMsg(self.prompt_messages["ERROR_CMD"].format(_command))
+                self.errorMsg(self.prompt_messages["ERROR_CMD"].format(_parameter))
                 return False 
         else:
             # Help without parameters called.
             # --> Just print out all commands and basic commands.
-            print("help xxx -> Get help on command 'xxx'.\n"
+            self.printMsg("help xxx -> Get help on command 'xxx'.\n"
                   "version -> Display version of console.\n"
                   "exit -> Quits console.")
 
@@ -188,7 +193,7 @@ class Console(object):
                 self.commandList[item].helpShort(_parameter)
             return True
 
-    # TODO
+    # TODO - load commands like plugins
     def loadCommandModule(self, *, _path="Commands\\", _name):
         if(len(_name) > 0):
             try:
@@ -197,9 +202,9 @@ class Console(object):
                     print(sys.path)
 
                 module = importlib.import_module(_name)
-                print("Imported Module: " + str(module))
+                self.printMsg("Imported Module: " + str(module))
                 command = getattr(module, 'class')
                 self.registerCommand(command)
                 return command
             except Exception as e:
-                print("Error-> " + str(e))
+                self.printMsg("Error-> " + str(e))
