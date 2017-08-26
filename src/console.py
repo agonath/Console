@@ -13,7 +13,7 @@ DEBUG = False
 # Console class
 class Console(object):
     
-    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "stdOut", "stdIn", "stdError"]
+    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "saveOut", "saveIn", "saveError"]
     
     def __init__(self, _args, _stdout=sys.stdout, _stdin=sys.stdin, _stderror=sys.stderr):
         self.history = {}
@@ -25,15 +25,23 @@ class Console(object):
         self.running = True
         self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"Command <{0}> doesn't seems to exists.\n", "ERROR":"ERROR-> {0}\n"} # replace with json file
         
+        # save the system streams
+        self.saveOut = sys.stdout
+        self.saveIn = sys.stdin
+        self.saveError = sys.stderr
         # set std streams, defaults to system values
-        self.stdOut = _stdout
-        self.stdIn = _stdin
-        self.stdError = _stderror
+        sys.stdout = _stdout
+        sys.stdin = _stdin
+        sys.stderr = _stderror
 
         
 
     def __del__(self):
-        pass
+        # restore system streams
+        sys.stdout = self.saveOut
+        sys.stdin = self.saveIn
+        sys.stderr = self.saveError
+        
 
 
     # --- Console core functions ----
@@ -54,13 +62,13 @@ class Console(object):
     # Print error messages.
     #
     def errorMsg(self, _msg):
-        self.stdError.write(self.prompt_messages["ERROR"].format(_msg))
+        sys.stderr.write(self.prompt_messages["ERROR"].format(_msg))
 
     #
-    # Print text to current console stdout stream.
+    # Print text to current console stdout stream. (faster than print...)
     #
     def printMsg(self, _msg):
-        self.stdOut.write(str(_msg))
+        sys.stdout.write(str(_msg))
 
     #
     # Print HTML formatted text to console.
@@ -100,7 +108,7 @@ class Console(object):
         parameters = str()
         
         # Console start
-        self.consoleStart();
+        self.consoleStart()
          
         while(self.running==True):
             
@@ -173,7 +181,7 @@ class Console(object):
                       "version -> Display version of console.\n"
                       "exit -> Quits console.\n")
                 return True
-            # registered command
+            # registered commands
             elif(_parameter in self.commandList.keys()):
                 self.commandList[_parameter.lower()].help(_parameter)
                 return True
@@ -186,25 +194,28 @@ class Console(object):
             # --> Just print out all commands and basic commands.
             self.printMsg("help xxx -> Get help on command 'xxx'.\n"
                   "version -> Display version of console.\n"
-                  "exit -> Quits console.")
+                  "exit -> Quits console.\n")
 
             for item in self.commandList.keys():
                 print(str(item) + str(" ->"), end=" ")
                 self.commandList[item].helpShort(_parameter)
             return True
 
-    # TODO - load commands like plugins
-    def loadCommandModule(self, *, _path="Commands\\", _name):
-        if(len(_name) > 0):
+    # TODO: Make own module for class loading...
+    # Load a class from a given module.
+    # Module must be a subfolder in the same folder as the console stuff.
+    #
+    def loadClassFromModule(self, *, _className, _moduleName):
+        if(len(_className) > 0 and len(_moduleName) > 0):
             try:
-                if(_path not in sys.path):
-                    sys.path.append(_path)
-                    print(sys.path)
-
-                module = importlib.import_module(_name)
-                self.printMsg("Imported Module: " + str(module))
-                command = getattr(module, 'class')
-                self.registerCommand(command)
-                return command
+               # if(_path not in sys.path):
+                #    sys.path.append(_path)
+                 #   print(sys.path)
+                
+                # try to import <moduleName.classname> and register <commandName>
+                module = importlib.import_module(_moduleName + str(".") + _className)
+                # try to find the class
+                newClass = getattr(module, _className)
+                return newClass
             except Exception as e:
-                self.printMsg("Error-> " + str(e))
+                self.errorMsg(str(e))

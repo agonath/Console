@@ -7,7 +7,7 @@ class Command(object):
     def __init__(self, *, _name, _console):
         self.name = _name           #Name of command
         self.console = _console     #Console object
-        self.console.registerCommand(self) # auto register our command
+        #self.console.registerCommand(self) # auto register our command
 
     def __del__(self):
         pass

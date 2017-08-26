@@ -24,7 +24,14 @@ class Hello_World(Command):
 def main(args):
     con = Console(args)
    # hello = Hello_World(_name="hello", _console=con)
-    hello = con.loadCommandModule(_name="helloworld.py", _path="Commands\\")
+   
+    # try to create the class object
+    newClass = con.loadClassFromModule(_className="Hello_World", _moduleName="Commands")
+    hello = newClass(_name="hello", _console=con)
+    # register the command...
+    con.registerCommand(hello)
+    
+    
     con.consoleLoop();
 
 
