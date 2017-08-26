@@ -1,5 +1,4 @@
 import sys
-import importlib
 import os
 #import signal # for later usage
 import string
@@ -13,7 +12,7 @@ DEBUG = False
 # Console class
 class Console(object):
     
-    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "saveOut", "saveIn", "saveError"]
+    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "saveOut", "saveIn", "saveError", "maxThreadCount", "width", "height"]
     
     def __init__(self, _args, _stdout=sys.stdout, _stdin=sys.stdin, _stderror=sys.stderr):
         self.history = {}
@@ -24,6 +23,11 @@ class Console(object):
         self.version = str(CONSOLE_VERSION[0]) + "." + str(CONSOLE_VERSION[1]) + "." + str(CONSOLE_VERSION[2])
         self.running = True
         self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"Command <{0}> doesn't seems to exists.\n", "ERROR":"ERROR-> {0}\n"} # replace with json file
+        self.maxThreadCount = os.cpu_count()
+        try:
+            self.width, self.height = os.get_terminal_size()
+        except Exception as e:
+            print(e)
         
         # save the system streams
         self.saveOut = sys.stdout
@@ -54,8 +58,12 @@ class Console(object):
             if(isinstance(_comObject, Command)):
                     self.commandList[_comObject.name] = _comObject
                     return True
+
+            self.errorMsg(_comObject)
             return False
-        except:
+        
+        except Exception as e:
+            self.errorMsg(e)
             return False
 
     #
@@ -85,9 +93,14 @@ class Console(object):
     def consoleStart(self, *, _listofCommands=[], _introMessage=""):
         # Intro text....
         if(_introMessage != ""):
-            print(_introMessage)
-        # Console version
-        print(self.version)
+            self.printMsg(_introMessage + str("\n"))
+        else:
+            # Console version
+            self.printMsg(str("Version ") + self.version + str(" - "))
+            self.printMsg(str(sys.getallocatedblocks()) + str(" Memory blocks used - "))
+            self.printMsg(str("Number of CPU cores ") + str(os.cpu_count()) + str("\n"))
+            self.printMsg(str("Current user is ") + str(os.getlogin()) + str("\n\n"))
+            
 
         # Register basic built in commands
         self.basicCommandList["exit"] = self.command_exit
@@ -200,22 +213,3 @@ class Console(object):
                 print(str(item) + str(" ->"), end=" ")
                 self.commandList[item].helpShort(_parameter)
             return True
-
-    # TODO: Make own module for class loading...
-    # Load a class from a given module.
-    # Module must be a subfolder in the same folder as the console stuff.
-    #
-    def loadClassFromModule(self, *, _className, _moduleName):
-        if(len(_className) > 0 and len(_moduleName) > 0):
-            try:
-               # if(_path not in sys.path):
-                #    sys.path.append(_path)
-                 #   print(sys.path)
-                
-                # try to import <moduleName.classname> and register <commandName>
-                module = importlib.import_module(_moduleName + str(".") + _className)
-                # try to find the class
-                newClass = getattr(module, _className)
-                return newClass
-            except Exception as e:
-                self.errorMsg(str(e))
