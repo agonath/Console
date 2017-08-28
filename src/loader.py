@@ -1,6 +1,9 @@
 import importlib
 import sys
 import os
+from os import path
+import marshal
+
 
 # Directory separator
 SEP=os.sep
@@ -71,5 +74,52 @@ class SystemLoader(object):
                 # try to find the class
                 newClass = getattr(_module, _className)
                 return newClass
+            except Exception as e:
+                print(e)
+
+
+    #
+    # Load a compiled Python into memory and return the module.
+    # TODO
+    def load_MemoryModule(self,  *, _path=str(".\\" + SEP), _moduleName):
+        if(True == os.path.exists(_path) and None != _moduleName and 0 < len(_moduleName)):
+            
+            completePath=_path
+            temp = None
+            
+            # check path end
+            if(False == _path.endswith(SEP)):
+                completePath += SEP
+                print(str("Pfad + SEP: " + completePath))
+            
+            # add the module name
+            completePath += _moduleName
+
+            # check file extension
+            fileExt = _moduleName[:4]
+            if(fileExt not in [".pyc", ".pyo"]):
+                completePath += str(".pyc")
+                print(str("Pfad + Ext: " + completePath))
+
+            print(str("Final path: " + completePath))
+            
+            # try to open the file
+            try:
+                with open(completePath, 'rb') as fd:
+                    temp = fd.read()
+                    buffer = temp[8:] #throw away the first 8 bytes wich contain only magic numer etc.
+                    fd.close()
+                    del(temp)
+
+            except Exception as e:
+                print(e)
+                return
+
+            # Try to get the module out of this byte chunk 
+            try:
+                code = marshal.loads(buffer)
+                
+                module = exec(code)
+                print(module)
             except Exception as e:
                 print(e)

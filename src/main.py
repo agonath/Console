@@ -36,9 +36,11 @@ def main(args):
     hello2 = newClass2(_name="hello2", _console=con)
     con.registerCommand(hello2)
 
-    print(chr(0x2557))
-    print(chr(0x2500))
-    print(oct(0x2500))
+   # print(chr(0x2557))
+    #print(chr(0x2500))
+   # print(oct(0x2500))
+    
+    mod = load.load_MemoryModule(_path="..\\bin\\Plugins\\Commands", _moduleName="Hello_World2")
     
     
     con.consoleLoop();
