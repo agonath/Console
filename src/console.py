@@ -4,21 +4,23 @@ import os
 import string
 #import urwid # -> Graphic Console
 from consoleCommand import Command
+from loader import XLoader
 
-CONSOLE_VERSION = (0, 0, 2)
+CONSOLE_VERSION = (0, 0, 3)
 DEBUG = False
 
 
 # Console class
 class Console(object):
     
-    __slots__ = ["prompt_messages", "history", "basicCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "saveOut", "saveIn", "saveError", "maxThreadCount", "width", "height"]
+    __slots__ = ["args", "prompt_messages", "history", "builtinCommandList", "commandList", "version", "lastResult", "lineCounter", "running", "saveOut", "saveIn", "saveError", "maxThreadCount", "width", "height"]
     
     def __init__(self, _args, _stdout=sys.stdout, _stdin=sys.stdin, _stderror=sys.stderr):
+        self.args = _args
         self.history = {}
         self.lineCounter = 0
         self.commandList = {}  # List of registred commands (class Command)
-        self.basicCommandList = {} # List of basic built in commands
+        self.builtinCommandList = {} # List of basic built in commands
         self.lastResult = str()
         self.version = str(CONSOLE_VERSION[0]) + "." + str(CONSOLE_VERSION[1]) + "." + str(CONSOLE_VERSION[2])
         self.running = True
@@ -53,13 +55,27 @@ class Console(object):
     #
     # Register a command
     #
-    def registerCommand(self, _comObject):
+    # _commandName -> Name of command to be registered
+    # _class -> Class name of instance of "Command" class
+    # _module -> Python file name
+    # _path -> Path to module
+    #
+    # Example: < console.registerCommand(_commandName="Hello2", _path="..\\bin\Plugins\\Commands", _module="Hello_World2.pyc", _class="Hello_World2") >
+    #
+    def registerCommand(self, *, _commandName, _class, _module, _path):
+        
+        load = XLoader() 
+        # try to create the class object
+        myClass = load.load_ModuleAndGetClass(_className=_class, _moduleName=_module, _path=_path)
+        myCommand = myClass(_name=_commandName, _console=self)
+        
         try:
-            if(isinstance(_comObject, Command)):
-                    self.commandList[_comObject.name] = _comObject
+            if(isinstance(myCommand, Command)):
+                    self.commandList[_commandName] = myCommand
+                    #print("Command {0} loaded...".format(_commandName))
                     return True
 
-            self.errorMsg(_comObject)
+            self.errorMsg(myCommand)
             return False
         
         except Exception as e:
@@ -103,9 +119,9 @@ class Console(object):
             
 
         # Register basic built in commands
-        self.basicCommandList["exit"] = self.command_exit
-        self.basicCommandList["version"] = self.command_version
-        self.basicCommandList["help"] = self.command_help
+        self.builtinCommandList["exit"] = self.command_exit
+        self.builtinCommandList["version"] = self.command_version
+        self.builtinCommandList["help"] = self.command_help
 
                                       
     #
@@ -122,7 +138,7 @@ class Console(object):
         
         # Console start
         self.consoleStart()
-         
+
         while(self.running==True):
             
             # read input until '\n'
@@ -157,14 +173,14 @@ class Console(object):
 
         # Handle the built in functions if needed
         try:
-            self.basicCommandList[_command.lower()](_parameters)
+            self.builtinCommandList[_command.lower()](_parameters)
             return
         except LookupError:
             # Handle the registred commands
             try:
-                self.commandList[_command.lower()].before(_parameters)
-                self.commandList[_command.lower()].execute(_parameters)
-                self.commandList[_command.lower()].after(_parameters)
+                self.commandList[_command].before(_parameters)
+                self.commandList[_command].execute(_parameters)
+                self.commandList[_command].after(_parameters)
             except LookupError:
                 self.errorMsg(self.prompt_messages["ERROR_CMD"].format(_command))
 
@@ -189,7 +205,7 @@ class Console(object):
         # Help with parameter called
         if(len(_parameter) > 0):
             # basic command
-            if(_parameter in self.basicCommandList.keys()):
+            if(_parameter in self.builtinCommandList.keys()):
                 self.printMsg("help xxx -> Get help on command 'xxx'.\n"
                       "version -> Display version of console.\n"
                       "exit -> Quits console.\n")
