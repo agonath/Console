@@ -4,7 +4,7 @@ import os
 import string
 #import urwid # -> Graphic Console
 from consoleCommand import Command
-from loader import XLoader
+from pluginLoader import PluginLoader
 
 CONSOLE_VERSION = (0, 0, 3)
 DEBUG = False
@@ -64,9 +64,9 @@ class Console(object):
     #
     def registerCommand(self, *, _commandName, _class, _module, _path):
         
-        load = XLoader() 
+        plugin = PluginLoader() 
         # try to create the class object
-        myClass = load.load_ModuleAndGetClass(_className=_class, _moduleName=_module, _path=_path)
+        myClass = plugin.load_ModuleAndGetClass(_className=_class, _moduleName=_module, _path=_path)
         myCommand = myClass(_name=_commandName, _console=self)
         
         try:

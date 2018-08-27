@@ -2,13 +2,13 @@ import importlib
 import sys
 import os
 from os import path
-import marshal
+#import marshal
 
 
 # Directory separator
 SEP=os.sep
 
-class XLoader(object):
+class PluginLoader(object):
 
     #
     # Helper: Remove file format endings if needed.
