@@ -103,7 +103,7 @@ class PluginLoader(object):
             
             # try to unload the module
             try:
-                return importlib.sys.modules.popitem(mod)
+                return importlib.sys.modules.pop(mod)
              
             except Exception as e:
                 print(e)
