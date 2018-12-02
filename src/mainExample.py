@@ -10,7 +10,7 @@ def main(args):
     con = Console(args)
       
     # try to register a command
-    con.registerCommand(_commandName="Hello", _class="Hello_World", _module="Hello_World", _path=str(".\\" + os.sep + "Commands"))
+    con.registerCommand(_commandName="Hello1", _class="Hello_World1", _module="Hello_World1", _path=str(".\\" + os.sep + "Commands"))
     
     # ...path points to another folder
     con.registerCommand(_commandName="Hello2", _path="..\\bin\Plugins\\Commands", _module="Hello_World2.pyc", _class="Hello_World2")

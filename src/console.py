@@ -65,14 +65,14 @@ class Console(object):
     def registerCommand(self, *, _commandName, _class, _module, _path):
         
         plugin = PluginLoader() 
-        # try to create the class object
+        # try to create the class object, the type of the class object must be "Command"
         myClass = plugin.load_ModuleAndGetClass(_className=_class, _moduleName=_module, _path=_path)
-        myCommand = myClass(_name=_commandName, _console=self)
+        myCommand = myClass(_name=_commandName, _console=self, _moduleName=plugin.normalizeModuleName(_module)) # "_module" may contain the filename with file extensions (.pyc, .pyo, py) so normalize it
         
         try:
             if(isinstance(myCommand, Command)):
                     self.commandList[_commandName] = myCommand
-                    #print("Command {0} loaded...".format(_commandName))
+                    print("Command {0} - {1} loaded...".format(_commandName, myCommand.moduleName))
                     return True
 
             self.errorMsg(myCommand)
@@ -81,6 +81,33 @@ class Console(object):
         except Exception as e:
             self.errorMsg(e)
             return False
+
+    
+
+    #
+    # Unregister a command.
+    #
+    # TODO: Test it!!!
+    #
+    def unregisterCommand(self, *, _commandName):
+        # Command known and loaded?
+        try:
+            c = self.commandList[_commandName]
+        except LookupError:#TODO
+            self.errorMsg(self.prompt_messages["ERROR_CMD"].format(_commandName))
+            return False
+        # Try to unload the plugin....
+        try:
+            plugin = PluginLoader()
+            # TODO: Not fully tested.
+            print(plugin.unload_Module(_moduleName=c.moduleName))
+            self.commandList.pop(_commandName)
+            return True
+        except Exception as e:
+            self.errorMsg(e)
+            return False
+
+
 
     #
     # Print error messages.
@@ -122,6 +149,7 @@ class Console(object):
         self.builtinCommandList["exit"] = self.command_exit
         self.builtinCommandList["version"] = self.command_version
         self.builtinCommandList["help"] = self.command_help
+        self.builtinCommandList["unregister"] = self.command_unregister
 
                                       
     #
@@ -143,24 +171,25 @@ class Console(object):
             
             # read input until '\n'
             line = input(self.prompt_messages["READY"])
-
-            # update history and counter
-            self.history[self.lineCounter] = line
-            self.lineCounter += 1
-                
-            # split line into command and parameter
-            cmd, sep, parameters = line.partition(' ')
-
-            #Debug info if enabled
-            if(DEBUG):
-                for x in self.history:
-                    self.printMsg("History-Entry No.: " + str(x) + " - " + str(self.history[x]))
-
-
-            # try to find the command and excute it
-            if(0 < len(cmd)):
-                self.parseExecute(cmd, parameters)
             
+            if(len(line) > 0):
+                # update history and counter
+                self.history[self.lineCounter] = line
+                self.lineCounter += 1
+                
+                # split line into command and parameter
+                cmd, sep, parameters = line.partition(' ')
+
+                #Debug info if enabled
+                if(DEBUG):
+                    for x in self.history:
+                        self.printMsg("History-Entry No.: {0} - {1}\n".format(str(x), str(self.history[x])))
+
+                # try to find the command and excute it
+                if(0 < len(cmd)):
+                    self.parseExecute(cmd, parameters)
+        
+    
     
     #
     # Find and excute an command
@@ -168,8 +197,8 @@ class Console(object):
     def parseExecute(self, _command, _parameters):
 
         if(DEBUG):
-            self.printMsg("Command: ", _command)
-            self.printMsg("Parameters: ", _parameters)
+           self.printMsg("Command: {0}\n".format(_command))
+           self.printMsg("Parameters: {0}\n".format(_parameters))
 
         # Handle the built in functions if needed
         try:
@@ -195,6 +224,12 @@ class Console(object):
         self.running = False
         return True
 
+    # Unregister previously loaded command
+    def command_unregister(self, _parameter):
+        if(len(_parameter) > 0 and _parameter != None):
+            return self.unregisterCommand(_commandName=_parameter);
+        return False
+
     # Print version
     def command_version(self, _parameter):
         print(self.version)
@@ -208,11 +243,12 @@ class Console(object):
             if(_parameter in self.builtinCommandList.keys()):
                 self.printMsg("help xxx -> Get help on command 'xxx'.\n"
                       "version -> Display version of console.\n"
-                      "exit -> Quits console.\n")
+                      "exit -> Quits console.\n"
+                      "unregister -> Unregister an previously loaded command.\n")
                 return True
             # registered commands
             elif(_parameter in self.commandList.keys()):
-                self.commandList[_parameter.lower()].help(_parameter)
+                self.commandList[_parameter].help(_parameter)
                 return True
             else:
                 # unknown command
@@ -223,7 +259,8 @@ class Console(object):
             # --> Just print out all commands and basic commands.
             self.printMsg("help xxx -> Get help on command 'xxx'.\n"
                   "version -> Display version of console.\n"
-                  "exit -> Quits console.\n")
+                  "exit -> Quits console.\n"
+                  "unregister -> Unregister an previously loaded command.\n")
 
             for item in self.commandList.keys():
                 print(str(item) + str(" ->"), end=" ")

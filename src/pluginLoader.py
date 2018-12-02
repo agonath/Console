@@ -1,3 +1,9 @@
+#
+# - Added "unload_Module" and "reload_ModuleByPath" - both needs to be tested - Agonath
+# 
+#
+
+
 import importlib
 import sys
 import os
@@ -65,6 +71,46 @@ class PluginLoader(object):
 
 
     #
+    # Reload a previously loaded module by path.
+    # Module must be a "*.py", "*.pyc" or "*.pyo" file.
+    # 
+    # Example: reloadModuleByPath(_path="..\\Programs\\Plugins", _moduleName="test")
+    #
+    def reload_ModuleByPath(self, *, _path=str(".\\" + SEP), _moduleName):
+        if(len(_moduleName) > 0):
+            mod = self.normalizeModuleName(_moduleName)
+            
+            if(len(_path) > 0):
+                # add path to list of known system paths
+                if(_path not in sys.path):
+                    sys.path.append(_path)
+            # try to reload module
+            try:
+                return importlib.reload(mod)
+            except Exception as e:
+                print(e)
+
+
+    #
+    # Unload a previously loaded module.
+    # Module must be previously loaded.
+    # 
+    # Example: unload_Module(_moduleName="test")
+    #
+    def unload_Module(self, *, _moduleName):
+        if(len(_moduleName) > 0):
+            mod = self.normalizeModuleName(_moduleName)
+            
+            # try to unload the module
+            try:
+                return importlib.sys.modules.popitem(mod)
+             
+            except Exception as e:
+                print(e)
+
+
+
+    #
     # Load a class from a given module.
     # Module must be an instance of <class, module>.
     #
@@ -76,3 +122,4 @@ class PluginLoader(object):
                 return newClass
             except Exception as e:
                 print(e)
+
