@@ -1,5 +1,5 @@
 #
-# - Added "unload_Module" and "reload_ModuleByPath" - both needs to be tested - Agonath
+# - Added "unload_Module" and "reload_ModuleByPath" - both needs to be tested - Agonath - 02.12.2018 -
 # 
 #
 
@@ -42,7 +42,7 @@ class PluginLoader(object):
     #
     def load_ModuleAndGetClass(self, *, _className, _moduleName, _path=str(".\\" + SEP)):
         try:
-            moduleABC=self.load_ModuleByPath(_path=_path, _moduleName = _moduleName)
+            moduleABC= self.load_ModuleByPath(_path=_path, _moduleName = _moduleName)
             classABC = self.load_ClassFromModule(_className = _className, _module=moduleABC)
             return classABC
         except Exception as e:
@@ -104,7 +104,6 @@ class PluginLoader(object):
             # try to unload the module
             try:
                 return importlib.sys.modules.pop(mod)
-             
             except Exception as e:
                 print(e)
 
@@ -118,8 +117,7 @@ class PluginLoader(object):
         if(len(_className) > 0 and None != _module):
             try:
                 # try to find the class
-                newClass = getattr(_module, _className)
-                return newClass
+                return (getattr(_module, _className))
             except Exception as e:
                 print(e)
 

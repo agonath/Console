@@ -4,10 +4,10 @@ import os
 import string
 #import urwid # -> Graphic Console
 from consoleCommand import Command
-from pluginLoader import PluginLoader
+from PluginLoader.pluginLoader import PluginLoader
 
 CONSOLE_VERSION = (0, 0, 3)
-DEBUG = False
+DEBUG = True
 
 
 # Console class
