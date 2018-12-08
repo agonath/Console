@@ -58,16 +58,17 @@ class PluginLoader(object):
     # Example: loadModuleByPath(_path="..\\Programs\\Plugins", _moduleName="test")
     #
     def load_ModuleByPath(self, *, _path=str(".\\" + SEP), _moduleName):
-        if(len(_moduleName) > 0):
-            mod = self.normalizeModuleName(_moduleName)
-            
+        if(len(_moduleName) > 0):            
             if(len(_path) > 0):
                 # add path to list of known system paths
                 if(_path not in sys.path):
                     sys.path.append(_path)
             # try to load module
             try:
-                return importlib.import_module(mod)
+                name = self.normalizeModuleName(_moduleName)
+                module = importlib.import_module(name)
+                sys.modules[name] = module
+                return module
             except Exception as e:
                 print(e)
 
