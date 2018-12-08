@@ -10,7 +10,6 @@ def main(args):
     con = Console(args)
       
     # try to register a command
-    print(str(".." + os.sep + "src" + os.sep + "Commands"))
     con.registerCommand(_commandName="Hello1", _class="Hello_World1", _module="Hello_World1", _path=str(".." + os.sep + "src" + os.sep + "Commands"))
     
     # ...path points to another folder

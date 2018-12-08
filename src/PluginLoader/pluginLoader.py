@@ -1,10 +1,12 @@
 #
+# - Updated function "normalizeModuleName", replaced if-statements with lookup in "importlib.machinery" for known file extensions. - Agonath - 08.12.2018
 # - Added "unload_Module" and "reload_ModuleByPath" - both needs to be tested - Agonath - 02.12.2018 -
 # 
 #
 
 
 import importlib
+from importlib import machinery
 import sys
 import os
 from os import path
@@ -21,12 +23,12 @@ class PluginLoader(object):
     #
     def normalizeModuleName(self, _moduleName):
         if(0 < len(_moduleName)):
-            if(True == _moduleName.endswith(".py")):
-                return _moduleName[:-3]
-            elif(True ==_moduleName.endswith(".pyc") or True == _moduleName.endswith(".pyo")):
-                return _moduleName[:-4]
-            else:
-                return _moduleName
+            extension_list = importlib.machinery.all_suffixes() # "all_suffixes" returns a list with all known python module file extensions
+            extension_list.append('.pyo') # old extension is missing?
+            for item in extension_list:
+                if(True == _moduleName.endswith(item)):
+                    return _moduleName[:-(len(item))]
+            return _moduleName
                 
             
 

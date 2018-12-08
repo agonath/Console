@@ -24,7 +24,7 @@ class Console(object):
         self.lastResult = str()
         self.version = str(CONSOLE_VERSION[0]) + "." + str(CONSOLE_VERSION[1]) + "." + str(CONSOLE_VERSION[2])
         self.running = True
-        self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"Command <{0}> doesn't seems to exists.\n", "ERROR":"ERROR-> {0}\n"} # replace with json file
+        self.prompt_messages = {"READY":"READY.\n", "ERROR_CMD":"Command <{0}> doesn't seems to exist.\n", "ERROR":"ERROR-> {0}\n"} # replace with json file
         self.maxThreadCount = os.cpu_count()
         try:
             self.width, self.height = os.get_terminal_size()
@@ -100,8 +100,9 @@ class Console(object):
         try:
             plugin = PluginLoader()
             # TODO: Not fully tested.
-            print(plugin.unload_Module(_moduleName=c.moduleName))
+            plugin.unload_Module(_moduleName=c.moduleName)
             self.commandList.pop(_commandName)
+            self.printMsg("Command <{0}> removed.\n".format(_commandName))
             return True
         except Exception as e:
             self.errorMsg(e)
